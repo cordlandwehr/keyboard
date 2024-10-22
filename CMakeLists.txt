@@ -27,11 +27,6 @@ option(enable-tests "Build tests" ON)
 # Install paths
 include(GNUInstallDirs)
 
-if(NOT DEFINED QT5_QML_INSTALL_DIR)
-    set(QT5_QML_INSTALL_DIR "${LIB_INSTALL_DIR}/qt5/qml" CACHE PATH
-            "Installation directory for Qt 5 QML plugins [LIB_INSTALL_DIR/qt5/qml]")
-endif()
-
 set(HUNSPELL_DICT_PATH "/usr/share/hunspell" CACHE PATH "Directory containing hunspell dictionary files")
 set(MALIIT_KEYBOARD_QML_DIR "${CMAKE_INSTALL_LIBDIR}/maliit/keyboard2/qml" CACHE PATH "Directory containing maliit-keyboard QML files")
 set(MALIIT_KEYBOARD_DATA_DIR "${CMAKE_INSTALL_DATADIR}/maliit/keyboard2" CACHE PATH "Directory containing maliit-keyboard data files")
