@@ -2,6 +2,25 @@ cmake_minimum_required(VERSION 3.9)
 
 project(maliit-keyboard VERSION 2.3.1)
 
+option(BUILD_WITH_QT6 "Enable build with Qt6" OFF)
+if(BUILD_WITH_QT6)
+  find_package(Qt6 6.0 REQUIRED COMPONENTS Core Core5Compat QuickControls2)
+  find_package(Qt6DBus)
+  find_package(Qt6Multimedia)
+endif()
+
+if(Qt6_FOUND)
+  set(QT_VERSION_MAJOR 6)
+  message(STATUS "Building with Qt6")
+else()
+  find_package(Qt5 5.14 REQUIRED COMPONENTS Core QuickControls2)
+  find_package(Qt5DBus)
+  find_package(Qt5Multimedia)
+  find_package(Qt5Feedback)
+  set(QT_VERSION_MAJOR 5)
+  message(STATUS "Building with Qt5")
+endif()
+
 option(enable-hunspell "Use hunspell for error correction (maliit-keyboard-plugin only)" ON)
 option(enable-tests "Build tests" ON)
 
@@ -18,7 +37,7 @@ set(MALIIT_KEYBOARD_QML_DIR "${CMAKE_INSTALL_LIBDIR}/maliit/keyboard2/qml" CACHE
 set(MALIIT_KEYBOARD_DATA_DIR "${CMAKE_INSTALL_DATADIR}/maliit/keyboard2" CACHE PATH "Directory containing maliit-keyboard data files")
 set(MALIIT_KEYBOARD_LANGUAGES_DIR "${CMAKE_INSTALL_LIBDIR}/maliit/keyboard2/languages" CACHE PATH "Directory containing maliit-keyboard data")
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
@@ -28,11 +47,6 @@ find_package(MaliitPlugins 0.99.1 REQUIRED)
 find_package(GLib2 REQUIRED)
 find_package(GIO REQUIRED)
 
-find_package(Qt5DBus)
-
-find_package(Qt5QuickControls2 REQUIRED)
-find_package(Qt5Multimedia)
-find_package(Qt5Feedback)
 find_package(Intl REQUIRED)
 
 find_package(AnthyUnicode)
@@ -87,7 +101,7 @@ set(WESTERNSUPPORT_SOURCES
 
 # TODO install logic/languageplugininterface.h and logic/abstractplugininterface.h as HEADERS
 
-set(maliit-keyboard-libraries Qt5::Core)
+set(maliit-keyboard-libraries Qt${QT_VERSION_MAJOR}::Core)
 set(maliit-keyboard-definitions HUNSPELL_DICT_PATH="${HUNSPELL_DICT_PATH}"
         MALIIT_GETTEXT_PACKAGE="${PROJECT_NAME}"
         MALIIT_LOCALE_DIR="${CMAKE_INSTALL_LOCALEDIR}/locale"
@@ -105,7 +119,7 @@ if(enable-hunspell)
 endif()
 
 add_library(maliit-keyboard-lib STATIC ${MALIIT_KEYBOARD_LIB_SOURCES})
-target_link_libraries(maliit-keyboard-lib Qt5::Core Maliit::Plugins)
+target_link_libraries(maliit-keyboard-lib Qt${QT_VERSION_MAJOR}::Core Maliit::Plugins)
 target_include_directories(maliit-keyboard-lib PUBLIC src/lib)
 target_compile_definitions(maliit-keyboard-lib PRIVATE ${maliit-keyboard-definitions})
 
@@ -129,7 +143,7 @@ set(QGSETTINGS_SOURCES
         src/3rdparty/QGSettings/util.h)
 
 add_library(gsettings-qt STATIC ${QGSETTINGS_SOURCES})
-target_link_libraries(gsettings-qt Qt5::Core ${GIO_LIBRARIES})
+target_link_libraries(gsettings-qt Qt${QT_VERSION_MAJOR}::Core ${GIO_LIBRARIES})
 target_include_directories(gsettings-qt PUBLIC ${GIO_INCLUDE_DIRS} src/3rdparty)
 target_compile_definitions(gsettings-qt PRIVATE -DQT_NO_KEYWORDS)
 
@@ -153,7 +167,10 @@ set(MALIIT_KEYBOARD_COMMON_SOURCES
         src/plugin/device.h)
 
 add_library(maliit-keyboard-common STATIC ${MALIIT_KEYBOARD_COMMON_SOURCES})
-target_link_libraries(maliit-keyboard-common Qt5::DBus Qt5::QuickControls2 Maliit::Plugins maliit-keyboard-lib maliit-keyboard-view gsettings-qt Qt5::Multimedia ${Intl_LIBRARIES})
+target_link_libraries(maliit-keyboard-common Qt${QT_VERSION_MAJOR}::DBus Qt${QT_VERSION_MAJOR}::QuickControls2 Maliit::Plugins maliit-keyboard-lib maliit-keyboard-view gsettings-qt Qt${QT_VERSION_MAJOR}::Multimedia ${Intl_LIBRARIES})
+if (BUILD_WITH_QT6)
+    target_link_libraries(maliit-keyboard-common Qt6::Core5Compat)
+endif()
 if (Qt5Feedback_FOUND)
     target_link_libraries(maliit-keyboard-common Qt5::Feedback)
     target_compile_definitions(maliit-keyboard-common PUBLIC HAVE_QT5_FEEDBACK)
@@ -183,6 +200,9 @@ target_compile_definitions(maliit-keyboard PRIVATE ${maliit-keyboard-definitions
 
 add_library(westernsupport STATIC ${WESTERNSUPPORT_SOURCES})
 target_link_libraries(westernsupport ${maliit-keyboard-libraries} Maliit::Plugins)
+if (BUILD_WITH_QT6)
+    target_link_libraries(westernsupport Qt6::Core5Compat)
+endif()
 target_include_directories(westernsupport PUBLIC src/lib/logic plugins/westernsupport ${maliit-keyboard-include-dirs})
 target_compile_definitions(westernsupport PRIVATE ${maliit-keyboard-definitions})
 
@@ -256,7 +276,7 @@ function(abstract_language_plugin _language _full_language)
     endforeach()
     add_library(${_target}plugin MODULE ${PLUGIN_SOURCES})
     set_target_properties(${_target}plugin PROPERTIES OUTPUT_NAME ${_language}plugin)
-    target_link_libraries(${_target}plugin Qt5::Core Maliit::Plugins maliit-keyboard-common ${abstract_language_plugin_LIBRARIES})
+    target_link_libraries(${_target}plugin Qt${QT_VERSION_MAJOR}::Core Maliit::Plugins maliit-keyboard-common ${abstract_language_plugin_LIBRARIES})
     target_include_directories(${_target}plugin PRIVATE src/lib/logic ${abstract_language_plugin_INCLUDE_DIRS})
     target_compile_definitions(${_target}plugin PRIVATE ${abstract_language_plugin_DEFINITIONS})
     install(TARGETS ${_target}plugin
@@ -385,7 +405,7 @@ add_subdirectory(po)
 if(enable-tests)
     enable_testing()
 
-    find_package(Qt5Test)
+    find_package(Qt${QT_VERSION_MAJOR}Test)
 
     add_library(test-utils STATIC
             tests/unittests/common/inputmethodhostprobe.cpp
@@ -393,7 +413,7 @@ if(enable-tests)
             tests/unittests/common/utils.cpp
             tests/unittests/common/utils.h)
 
-    target_link_libraries(test-utils PUBLIC Maliit::Plugins Qt5::Core Qt5::Gui Qt5::Test westernsupport)
+    target_link_libraries(test-utils PUBLIC Maliit::Plugins Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Test westernsupport)
     target_include_directories(test-utils PUBLIC tests/unittests tests/unittests/common src src/lib)
 
     function(create_test name)
