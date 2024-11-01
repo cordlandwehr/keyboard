@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.9)
 project(maliit-keyboard VERSION 2.3.1)
 
 option(BUILD_WITH_QT6 "Enable build with Qt6" OFF)
+set(MALIIT_SUFFIX "")
 if(BUILD_WITH_QT6)
   find_package(Qt6 6.0 REQUIRED COMPONENTS Core Core5Compat QuickControls2)
   find_package(Qt6DBus)
@@ -11,6 +12,7 @@ endif()
 
 if(Qt6_FOUND)
   set(QT_VERSION_MAJOR 6)
+  set(MALIIT_SUFFIX "6")
   message(STATUS "Building with Qt6")
 else()
   find_package(Qt5 5.14 REQUIRED COMPONENTS Core QuickControls2)
@@ -28,16 +30,16 @@ option(enable-tests "Build tests" ON)
 include(GNUInstallDirs)
 
 set(HUNSPELL_DICT_PATH "/usr/share/hunspell" CACHE PATH "Directory containing hunspell dictionary files")
-set(MALIIT_KEYBOARD_QML_DIR "${CMAKE_INSTALL_LIBDIR}/maliit/keyboard2/qml" CACHE PATH "Directory containing maliit-keyboard QML files")
-set(MALIIT_KEYBOARD_DATA_DIR "${CMAKE_INSTALL_DATADIR}/maliit/keyboard2" CACHE PATH "Directory containing maliit-keyboard data files")
-set(MALIIT_KEYBOARD_LANGUAGES_DIR "${CMAKE_INSTALL_LIBDIR}/maliit/keyboard2/languages" CACHE PATH "Directory containing maliit-keyboard data")
+set(MALIIT_KEYBOARD_QML_DIR "${CMAKE_INSTALL_LIBDIR}/maliit${MALIIT_SUFFIX}/keyboard2/qml" CACHE PATH "Directory containing maliit-keyboard QML files")
+set(MALIIT_KEYBOARD_DATA_DIR "${CMAKE_INSTALL_DATADIR}/maliit${MALIIT_SUFFIX}/keyboard2" CACHE PATH "Directory containing maliit-keyboard data files")
+set(MALIIT_KEYBOARD_LANGUAGES_DIR "${CMAKE_INSTALL_LIBDIR}/maliit${MALIIT_SUFFIX}/keyboard2/languages" CACHE PATH "Directory containing maliit-keyboard data")
 
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(MaliitPlugins 0.99.1 REQUIRED)
+find_package(Maliit${MALIIT_SUFFIX}Plugins 0.99.1 REQUIRED)
 
 find_package(GLib2 REQUIRED)
 find_package(GIO REQUIRED)
@@ -375,7 +377,7 @@ install(FILES COPYING COPYING.BSD README.md
         DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/maliit-keyboard)
 
 install(TARGETS maliit-keyboard-plugin maliit-keyboard
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/maliit/plugins
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/maliit${MALIIT_SUFFIX}/plugins
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(DIRECTORY qml/keys qml/languages
