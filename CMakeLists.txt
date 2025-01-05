@@ -8,6 +8,7 @@ if(BUILD_WITH_QT6)
   find_package(Qt6 6.0 REQUIRED COMPONENTS Core Core5Compat QuickControls2)
   find_package(Qt6DBus)
   find_package(Qt6Multimedia)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
 if(Qt6_FOUND)
